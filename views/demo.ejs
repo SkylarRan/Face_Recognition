@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link rel='stylesheet' href='/assets/bootstrap/css/bootstrap.min.css' />
+    <link rel="stylesheet" href='/assets/bootstrap-table/dist/bootstrap-table.min.css'>
+
+    <script src="/js/jquery-3.4.1.js"></script>
+    <script src="/js/upload.js"></script>
+    <script src="/assets/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="/assets/jquery-validation/dist/additional-methods.js"></script>
+
+    <script src="/js/popper.js"></script>
+    <script src="/assets/bootstrap/js/bootstrap.js"></script>
+    <script src="/assets/bootstrap-table/dist/bootstrap-table.min.js"></script>
+    <script src="https://cdn.bootcss.com/flv.js/1.5.0/flv.min.js"></script>
+
+    <style>
+        .demo-title{
+            line-height: 46px;
+            font-size: 32px;
+            letter-spacing: 0;
+            text-align: center;
+            margin: 20px 0;
+            font-family: 'Droid Sans', sans-serif;
+            font-weight: bold;
+            color: #58595a;
+        }
+        .is-invalid {
+            color: #dc3545;
+        }
+        .recognize {
+            display: inline-block;
+            width:60px;
+            height:30px;
+            padding:3px;
+            border-radius: 30px;
+            -webkit-border-radius:30px;
+            -moz-border-radius:30px;
+            background-color: #838383;
+            position: relative;
+        }
+
+        .recognize-btn {
+            width:25px;
+            height:25px;
+            -webkit-border-radius:30px;
+            -moz-border-radius:30px;
+            border-radius:30px;
+            background-color: #fff;
+            position: absolute;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+    <div class="demo-title">JXT AISS</div>
+    <div class="container bg-light">
+        <div class="row">
+            <div id="videos" class="col-md-12">
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <button type="button" class="btn btn-outline-secondary mr-5" data-toggle="modal"
+                            data-target="#configureModal">
+                            Configure
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" data-toggle="modal"
+                            data-target="#blacklistModal">
+                            Blacklist
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="recognize" data-toggle="tooltip" data-placement="top" title="start recognizing">
+                            <div isopen="false" class="recognize-btn"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="cameras" class="row">
+                </div>
+            </div>
+            <div id="results" class="col-md-12">
+                <div class="card">
+                    <div class="card-header">Records</div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">RecognizedAt</th>
+                                <th scope="col">Frame</th>
+                                <th scope="col">Camera</th>
+                                <th scope="col">Location</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th scope="row">1</th>
+                                <td>Mark</td>
+                                <td>Otto</td>
+                                <td>@mdo</td>
+                                <td>xxx</td>
+                                <td>xxx</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">2</th>
+                                <td>Mark</td>
+                                <td>Otto</td>
+                                <td>@mdo</td>
+                                <td>xxx</td>
+                                <td>xxx</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">3</th>
+                                <td>Mark</td>
+                                <td>Otto</td>
+                                <td>@mdo</td>
+                                <td>xxx</td>
+                                <td>xxx</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- configureModal -->
+    <div class="modal fade" id="configureModal" tabindex="-1" role="dialog" aria-labelledby="configureModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="configureModalLabel">Configure</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="configureToolbar">
+                        <button class="btn btn-sm btn-info add">Add</button>
+                        <button class="btn btn-sm btn-success update">Update</button>
+                        <button class="btn btn-sm btn-danger delete">Delete</button>
+                        <button class="btn btn-sm btn-secondary testServer" data-toggle="modal" data-target="#serverModal">Test
+                            Server</button>
+                    </div>
+                    <table id="configureTable" class="table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th data-radio="true"></th>
+                                <th data-field="id" data-visible="false">ID</th>
+                                <th data-field="name">Name</th>
+                                <th data-field="location">Location</th>
+                                <th data-field="url">RTSP Address</th>
+                                <th data-field="camara_id">Username</th>
+                                <th data-field="camara_pw">Password</th>
+                                <th data-field="memo">Memo</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- addConfigure -->
+    <div class="modal fade" id="configureFormModal" tabindex="-1" role="dialog" aria-labelledby="configureFormModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form id="configureForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="configureFormModalLabel">Add Configure</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                            <input type="text" name="id" hidden>
+                            <input type="text" class="form-control mb-3" name="url" placeholder="RTSP URL">
+                            <input type="text" class="form-control mb-3" name="camara_id" placeholder="Username">
+                            <input type="text" class="form-control mb-3" name="camara_pw" placeholder="Password">
+                            <input type="text" class="form-control mb-3" name="location" placeholder="Location">
+                            <input type="text" class="form-control mb-3" name="name" placeholder="Alias">
+                            <input type="text" class="form-control mb-3" name="memo" placeholder="Memo">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- blacklistModal -->
+    <div class="modal fade" id="blacklistModal" tabindex="-1" role="dialog" aria-labelledby="blacklistModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="blacklistModalLabel">Black List</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="blacklistToolbar">
+                        <button class="btn btn-sm btn-info add">Add</button>
+                        <button class="btn btn-sm btn-success update">Update</button>
+                        <button class="btn btn-sm btn-danger delete">Delete</button>
+                        <button class="btn btn-sm btn-secondary testServer" data-toggle="modal"
+                            data-target="#serverModal">Test Server</button>
+                    </div>
+                    <table id="blacklistTable" class="table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th data-radio="true"></th>
+                                <th data-field="id" data-visible="false">ID</th>
+                                <th data-field="image" data-formatter="imageFormatter">Image</th>
+                                <th data-field="name">Name</th>
+                                <th data-field="memo">Memo</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- blacklistFormModal -->
+    <div class="modal fade" id="blacklistFormModal" tabindex="-1" role="dialog"
+        aria-labelledby="blacklistFormModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form id="blacklistForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="blacklistFormModalLabel">Add Blacklist</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-5">
+                                <div id="drop_area"></div>
+                            </div>
+                            <div class="col-7">
+                                <input type="text" name="id" hidden>
+                                <input type="text" name="name" class="form-control mb-3" placeholder="Name">
+                                <input type="text" name="memo" class="form-control mb-3" placeholder="Memo">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- serverModal -->
+    <div class="modal fade" id="serverModal" tabindex="-1" role="dialog" aria-labelledby="serverModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="serverModalLabel">Server Editor</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="serverForm">
+                        <input type="text" id="ip" name="ip" class="form-control mb-3" placeholder="IP" required>
+                        <input type="text" id="port" name="port" class="form-control mb-3" placeholder="Port" required>
+                        <button type="submit" class="form-control btn btn-primary">Test connection</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- deleteModal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Modal title</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Are you sure that you want to delete this record ?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button id="confirm" type="button" class="btn btn-primary" data-dismiss="modal">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let uploadImg = null;
+        let deleteID = null;
+        let streams = [];
+        let tids = null;
+        // let streams = [
+                // {
+                //     url: "http://ivi.bupt.edu.cn/hls/cctv1hd.m3u8",
+                //     name: "cctv1",
+                //     location: "Beijing"
+                // },
+            // ];
+
+        let defaultUploadImage = "img/upload.png";
+        let imageProcessServer = localStorage.getItem("imageProcessServer");
+        let configureServer = localStorage.getItem("configureServer");
+        console.log("imageProcessServer:" + imageProcessServer + ", configureServer:" + configureServer);
+
+        function imageFormatter(value) {
+            if (value) {
+                let src = imageProcessServer + "/" + value;
+                let img = '<img src="' + src + '" height="80px" width="120px">';
+                return img;
+            }
+            return null;
+        }
+
+        function loadFormData(formId, obj) {
+            if ($.type(obj) != "object") return false;
+
+            let $form = $("#" + formId);
+            for (let key in obj) {
+                let value = obj[key];
+                $form.find("[name='" + key + "']").val(value);
+            }
+        }
+
+        function showVideos(strams){
+            streams.forEach(function (value, index) {
+                let video = '<div class="col-md-3">' +
+                            '   <div class="card mb-4 shadow-sm">' +
+                            '       <video id="videoElement' + index + '" height="200px">' +
+                            '           Your browser is too old which doesn\'t support HTML5 video.' +
+                            '       </video>' +
+                            '       <div class="card-body">' +
+                            '           <p class="text-muted">'+ value.name + ' ' + value.location + '</p>' +
+                            '       </div' +
+                            '   </div>' +
+                            '</div>'
+
+                $("#cameras").append(video);
+            });
+
+            if (flvjs.isSupported()) {
+                streams.forEach(function (value, index) {
+                    console.log("flv:" + value.url);
+                    let videoElement = document.getElementById('videoElement' + index);
+
+                    let flvPlayer = flvjs.createPlayer({
+                        type: 'flv',
+                        url: value.url
+                    });
+                        // url: 'http://10.180.3.82:9001/live?port=9100&app=myapp&stream=test'
+
+                    flvPlayer.attachMediaElement(videoElement);
+                    flvPlayer.load();
+                    flvPlayer.play();
+                });
+            }
+        }
+
+        $(document).ready(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+
+            $('.recognize').on('click',function(){
+                if ($('.recognize-btn').attr('isopen') == 'false') {
+                    // start recognize
+                    $('.recognize').attr('data-original-title', 'stop recognizing');
+                    $('.recognize-btn').attr('isopen','true').animate({left:'33px'});
+                    $('.recognize-btn').parent().css('background-color','#4fafe2');
+                    let data = {
+                        "rtmp": "rtmp://58.200.131.2:1935/livetv/hunantv",
+                        "name": "hunan",
+                        "location": "湖南"
+                    };
+
+                    $.ajax({
+                        url: imageProcessServer + "/recognize/start",
+                        type: 'post',
+                        data: JSON.stringify(data),
+                        dataType: 'json',
+                        cache: false,
+                        processData: false,
+                        contentType: 'application/json'
+                    }).done( res => {
+                        if(res.status){
+                            tids = res.data;
+                        }else{
+                            alert(res.message);
+                        }
+                    }).fail( res => {
+                        alert(res)
+                    })
+
+                } else {
+                    // stop recognize
+                    $('.recognize').attr('data-original-title', 'start recognizing');
+                    $('.recognize-btn').attr('isopen','false').animate({left:'3px'});
+                    $('.recognize-btn').parent().css('background-color','#838383');
+
+                    let data = {
+                        "tids": tids
+                    }
+                    $.ajax({
+                        url: imageProcessServer + "/recognize/stop",
+                        type: 'post',
+                        data: JSON.stringify(data),
+                        dataType: 'json',
+                        cache: false,
+                        processData: false,
+                        contentType: 'application/json'
+                    }).done( res => {
+                        if(!res.status){
+                            alert(res.message);
+                        }
+                    }).fail( res => {
+                        alert(res)
+                    })
+
+                }
+            });
+
+            
+
+            if (imageProcessServer) {
+                $("#blacklistTable").bootstrapTable({
+                    url: imageProcessServer + '/blacklists',
+                    method: 'get',
+                    cache: false,
+                    toolbar: "#blacklistToolbar",
+                    pagination: true,
+                    pageSize: 5,
+                    pageList: [5, 10, 15, 20, 25],
+                    sidePagination: 'server',
+                    responseHandler: function (res) {
+                        return {
+                            "total": res.total,
+                            "rows": res.data
+                        };
+                    }
+                });
+            }
+
+            if (configureServer) {
+                // get all streams
+                $.ajax({
+                    url: configureServer + "/streams",
+                    type: 'get',
+                    cache: false,
+                    contentType: 'json'
+                }).done( res => {
+                    if(res.status){
+                        streams = res.data;
+                        showVideos(streams);
+                    }else{
+                        alert(res.message);
+                    }
+                })
+
+                $("#configureTable").bootstrapTable({
+                    url: configureServer + '/camaras',
+                    method: 'get',
+                    cache: false,
+                    toolbar: "#configureToolbar",
+                    pagination: true,
+                    pageSize: 10,
+                    pageList: [10],
+                    sidePagination: 'server',
+                    responseHandler: function (res) {
+                        console.log(res);
+                        return {
+                            "total": res.data.length,
+                            "rows": res.data
+                        };
+                    }
+                });
+            }
+
+            $("#serverForm").validate({
+                rules: {
+                    ip: {
+                        required: true,
+                        ipv4: true
+                    },
+                    port: {
+                        required: true,
+                        digits: true
+                    }
+                },
+                errorClass: "is-invalid",
+                submitHandler: function () {
+                    let ip = $("#ip").val();
+                    let port = $("#port").val();
+                    let url = "http://" + ip + ":" + port + "/api/v1.0";
+                    $.ajax({
+                        url: url + '/test',
+                        method: 'get',
+                        dataType: 'json'
+                    }).done(res => {
+                        alert("Testing connection succeed!");
+                        $("#serverModal").modal('hide');
+                        if ($("#blacklistModal").hasClass("show")) {
+                            localStorage.setItem("imageProcessServer", url);
+                            imageProcessServer = url;
+                        }
+                        if ($("#configureModal").hasClass("show")) {
+                            localStorage.setItem("configureServer", url);
+                            configureServer = url;
+                        }
+                    }).fail(res => {
+                        alert("Testing connection failed!");
+                        console.log(res);
+                    })
+                }
+            })
+
+            // reset serverForm
+            $("button.testServer").click(function () {
+                $("#serverForm")[0].reset();
+            });
+
+            // upload image
+            let dragImgUpload = new DragImgUpload("#drop_area", {
+                callback: function (files) {
+                    uploadImg = files[0] ? files[0] : null;
+                }
+            })
+
+            $("#blacklistToolbar .add").click(function () {
+                $("#blacklistFormModalLabel").html("Add Blacklist");
+                $("#blacklistForm")[0].reset();
+                $("#drop_area img").attr('src', defaultUploadImage);
+                $("#blacklistFormModal").modal('show');
+            });
+
+            $("#blacklistToolbar .update").click(function () {
+                let row = $("#blacklistTable").bootstrapTable('getSelections')[0];
+                if (!row) {
+                    alert("Please select one row first.");
+                    return;
+                }
+
+                $("#blacklistFormModalLabel").html("Edit Blacklist");
+                loadFormData("blacklistForm", row);
+                $("#drop_area img").attr('src', imageProcessServer + "/" + row.image);
+                uploadImg = null;
+                $("#blacklistFormModal").modal('show');
+            })
+
+            $("#blacklistToolbar .delete").click(function () {
+                let row = $("#blacklistTable").bootstrapTable('getSelections')[0];
+                if (!row) {
+                    alert("Please select one row first.");
+                    return;
+                }
+                deleteID = row.id;
+                $("#deleteModalLabel").html("Delete Blacklist");
+                $("#deleteModal").modal('show');
+            });
+
+            $("#confirm").click(function () {
+                console.log("delete:" + deleteID);
+                let url = "";
+                let $table = null;
+                
+                if($("#configureModal").hasClass('show')){
+                    url = configureServer + "/camaras/delete";
+                    $table = $("#configureTable");
+                }else if($("#blacklistModal").hasClass('show')){
+                    url = configureServer + "/blacklist/delete";
+                    $table = $("#blacklistTable");
+                }
+                
+                if(url == "") return false;
+                let formData = new FormData();
+                formData.append("id", deleteID);
+                $.ajax({
+                    url: url,
+                    type: 'post',
+                    data: formData,
+                    dataType: 'json',
+                    cache: false,
+                    processData: false,
+                    contentType: false
+                }).done(res => {
+                    if (res.status) {
+                        $table.bootstrapTable('refresh');
+                    } else {
+                        alert(res.message);
+                    }
+                })
+            })
+
+            $("#blacklistForm").validate({
+                rules: {
+                    name: "required"
+                },
+                errorClass: "is-invalid",
+                submitHandler: function (form) {
+                    let imgSrc = $("#drop_area img").attr("src");
+                    if (!uploadImg && imgSrc == defaultUploadImage) {
+                        alert("Image is required!");
+                        return;
+                    }
+                    let formData = new FormData(form);
+                    formData.append("image", uploadImg);
+                    $.ajax({
+                        url: imageProcessServer + "/blacklist/save",
+                        type: 'post',
+                        data: formData,
+                        dataType: "json",
+                        cache: false,
+                        processData: false,//用于对data参数进行序列化处理 这里必须false
+                        contentType: false, //必须
+                        success: function () {
+                            alert("success");
+                            $("#blacklistTable").bootstrapTable('refresh');
+                            $("#blacklistFormModal").modal('hide');
+                        },
+                        error: function (XMLHttpRequest, textStatus, errorThrown) {
+                            alert("failed!");
+                            console.log(errorThrown)
+                        }
+                    })
+                }
+
+            });
+
+            $("#configureToolbar .add").click(function () {
+                $("#configureFormModalLabel").html("Add Configure");
+                $("#configureForm")[0].reset();
+                $("#configureFormModal").modal('show');
+            });
+
+            $("#configureToolbar .update").click(function () {
+                let row = $("#configureTable").bootstrapTable('getSelections')[0];
+                if (!row) {
+                    alert("Please select one row first.");
+                    return;
+                }
+
+                $("#configureFormModalLabel").html("Edit Configure");
+                loadFormData("configureForm", row)
+                $("#configureFormModal").modal('show');
+            });
+            
+            $("#configureToolbar .delete").click(function () {
+                let row = $("#configureTable").bootstrapTable('getSelections')[0];
+                if (!row) {
+                    alert("Please select one row first.");
+                    return;
+                }
+
+                deleteID = row.id;
+                $("#deleteModalLabel").html("Delete Configure");
+                $("#deleteModal").modal('show');
+            });
+
+            $("#configureForm").validate({
+                rules:{
+                    url: 'required',
+                    location: 'required',
+                    name: 'required',
+                },
+                errorClass: "is-invalid",
+                submitHandler: function (form) {
+                    let title = $("#configureFormModalLabel").html();
+                    console.log(title);
+                    let methodName = title.startsWith('Add')? 'add':'edit';
+                    let formData = new FormData(form);
+                    $.ajax({
+                        url: configureServer + "/camaras/" + methodName,
+                        type: 'post',
+                        data: formData,
+                        dataType: 'json',
+                        cache: false,
+                        processData: false,
+                        contentType: false
+                    }).done( res => {
+                        if(res.status){
+                            streams.push(res.data[0]);
+                            alert("success");
+                            $("#configureTable").bootstrapTable('refresh');
+                            $("#configureFormModal").modal('hide');
+                        }else{
+                            alert(res.message);
+                        }
+                        
+                    }).fail( res => {
+                        console.log(res)
+                    })
+                }
+            });
+
+            
+            
+           
+           
+        })
+
+        // set backdrop when using multi-modal
+        $(document).on('show.bs.modal', '.modal', function (event) {
+            $(this).appendTo($('body'));
+        }).on('shown.bs.modal', '.modal.fade', function (event) {
+            setModalsAndBackdropsOrder();
+        }).on('hidden.bs.modal', '.modal', function (event) {
+            setModalsAndBackdropsOrder();
+        });
+
+        function setModalsAndBackdropsOrder() {
+            let modalZIndex = 1040;
+            $('.modal.fade').each(function (index) {
+                let $modal = $(this);
+                modalZIndex++;
+                $modal.css('zIndex', modalZIndex);
+                $modal.next('.modal-backdrop.fade').addClass('hidden').css('zIndex', modalZIndex - 1);
+            });
+            $('.modal.fade:visible:last').focus().next('.modal-backdrop.fade').removeClass('hidden');
+        }
+    </script>
+</body>
+
+</html>

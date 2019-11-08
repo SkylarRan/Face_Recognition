@@ -1,0 +1,20 @@
+{
+  "name": "facerecognition",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./server"
+  },
+  "dependencies": {
+    "bootstrap": "^4.3.1",
+    "bootstrap-table": "^1.15.5",
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "ejs": "~2.6.1",
+    "express": "~4.16.1",
+    "http-errors": "~1.6.3",
+    "jquery-validation": "^1.19.1",
+    "morgan": "~1.9.1",
+    "popper.js": "^1.16.0"
+  }
+}
