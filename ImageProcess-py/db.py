@@ -21,3 +21,15 @@ class Blacklist(BaseModel):
 
     class Meta:
         table_name = 'blacklist'
+
+
+class Record(BaseModel):
+    id = CharField(primary_key=True)
+    name = CharField()
+    frame = CharField()
+    recognizedAt = CharField()
+    camera = CharField()
+    location = CharField()
+
+    class Meta:
+        table_name = 'record'

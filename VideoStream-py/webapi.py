@@ -1,5 +1,7 @@
 from domain import Video,Result,Camara,Stream
 from helper import FF_helper
+from flask import current_app
+import socket
 import json
 import sys
 class Camara_Api():
@@ -17,7 +19,6 @@ class Camara_Api():
                 return result.result2dict() 
             Video.connect()
             v1=Video.get_or_none(Video.id==camara_id)
-            print(type(v1))
             Video.close()
             if not v1:
                 result.message="camara doesn't exist"
@@ -27,7 +28,7 @@ class Camara_Api():
             result.status=True
             return result.result2dict()
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            current_app.logger.warning("Unexpected error:", sys.exc_info())
             result.message="Unexpected error has happened,please contact website administrator"
             return result.result2dict() 
 
@@ -53,7 +54,7 @@ class Camara_Api():
             result.status=True
             return result.result2dict()
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            current_app.logger.warning("Unexpected error:", sys.exc_info())
             result.message="Unexpected error has happened,please contact website administrator"
             return result.result2dict() 
         return result.result2dict()
@@ -72,12 +73,16 @@ class Camara_Api():
             result.message="Data error,location dosen't exist"
             return result.result2dict()
         Video.connect()
-        Video.create(camara_url=data['url'],name=data['name'],location=data['location'],camara_id=data['camara_id'],camara_pw=data['camara_pw'],remark=data['memo'],stream_url='http://10.180.3.82:9001/live?port=9100&app=myapp&stream='+data['name'])
+        Video.create(camara_url=data['url'],name=data['name'],location=data['location'],camara_id=data['camara_id'],camara_pw=data['camara_pw'],remark=data['memo']
+        ,stream_url='http://'+self.__fhelper.ipadress+':9001/live?port=9100&app=myapp&stream='+data['name'],
+        rtmp_url='rtmp://'+self.__fhelper.ipadress+':9100/myapp/'+data['name'])
         Video.close()
         stream=Stream()
+        stream.id=Video.get(name=data['name']).id
         stream.name=data['name']
-        stream.url='http://10.180.3.82:9001/live?port=9100&app=myapp&stream='+data['name']
+        stream.url='http://'+self.__fhelper.ipadress+':9001/live?port=9100&app=myapp&stream='+data['name']
         stream.location=data['location']
+        stream.rtmp='rtmp://'+self.__fhelper.ipadress+':9100/myapp/'+data['name']
         self.__fhelper.name=data['name']
         self.__fhelper.rtsp_url=data['url']
         self.__fhelper.start_process()
@@ -107,31 +112,33 @@ class Camara_Api():
             if not v1:
                 result.message="camara doesn't exist"
                 return result.result2dict()
-            self.__fhelper.name=v1.name
-            pid=0
-            for f in self.__fhelper.flist:
-                if f['name']==v1.name:
-                    pid=f['pid']
-                    break
-            self.__fhelper.end_process(pid)
+            if v1.name!=data['name'] :
+                self.__fhelper.name=v1.name
+                pid=0
+                for f in self.__fhelper.flist:
+                    if f['name']==v1.name:
+                        pid=f['pid']
+                        break
+                self.__fhelper.end_process(pid)
+                self.__fhelper.name=data['name']
+                self.__fhelper.rtsp_url=data['url']
+                self.__fhelper.start_process()
             v1.name=data['name']
             v1.camara_url=data['url']
             v1.location=data['location']
             v1.camara_id=data['camara_id']
             v1.camara_pw=data['camara_pw']
             v1.remark=data['memo']
+            v1.stream_url='http://'+self.__fhelper.ipadress+':9001/live?port=9100&app=myapp&stream='+data['name']
+            v1.rtmp_url='rtmp://'+self.__fhelper.ipadress+':9100/myapp/'+data['name']
             v1.save()
-            self.__fhelper.name=data['name']
-            self.__fhelper.rtsp_url=data['url']
-            self.__fhelper.start_process()
             stream=self.video2stream(v1)
-            stream.url='rtmp://127.0.0.1:1935/live/'+data['name']
             result.data.append(stream.stream2dict())
             result.message=""
             result.status=True
             return result.result2dict()
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            current_app.logger.warning("Unexpected error:", sys.exc_info())
             result.message="Unexpected error has happened,please contact website administrator"
             return result.result2dict()
 
@@ -153,7 +160,7 @@ class Camara_Api():
             result.status=True
             return result.result2dict()
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            current_app.logger.warning("Unexpected error:", sys.exc_info())
             result.message="Unexpected error has happened,please contact website administrator"
             return result.result2dict() 
 
@@ -167,7 +174,7 @@ class Camara_Api():
             vlist=Video.select()
             Video.close()
             if not vlist:
-                result.message="camara doesn't exist"
+                result.message="stream doesn't exist"
                 return result.result2dict()
             for v1 in vlist:
                 stream=self.video2stream(v1)
@@ -175,12 +182,18 @@ class Camara_Api():
             result.status=True
             return result.result2dict()
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            current_app.logger.warning("Unexpected error:", sys.exc_info())
             result.message="Unexpected error has happened,please contact website administrator"
             return result.result2dict() 
 
     def startallstream(self):
         vlist=Video.select()
+        try:
+            s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+            s.connect(('8.8.8.8',80))
+            self.__fhelper.ipadress=s.getsockname()[0]
+        finally:
+            s.close()
         for v in vlist:
             self.__fhelper.name=v.name
             self.__fhelper.rtsp_url=v.camara_url
@@ -199,9 +212,11 @@ class Camara_Api():
     @staticmethod
     def video2stream(video):
         stream=Stream()
+        stream.rtmp=video.rtmp_url
         stream.url=video.stream_url
         stream.location=video.location
         stream.name=video.name
+        stream.id=video.id
         return stream
 
 

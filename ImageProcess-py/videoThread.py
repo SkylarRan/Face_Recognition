@@ -1,11 +1,13 @@
 import datetime
 import time
 import os
+import uuid
 from cv2 import cv2
 import threading
 import inspect
 import ctypes
 from model import face
+from db import Record
 
 face_recognition = face.Recognition()
 output_dir = os.path.join(os.getcwd(), "static", "record")
@@ -15,11 +17,13 @@ frame_interval = 5
 
 
 class VideoThread(threading.Thread):
-    def __init__(self, rtmp, alias, location):
+    def __init__(self, rtmp, alias, location, record_interval):
         super(VideoThread, self).__init__()
         self.video = cv2.VideoCapture(rtmp)
         self.alias = alias
         self.location = location
+        self.record_interval = record_interval * 60
+        self.start_time = time.time()
         self.frameCount = 0
 
     def run(self):
@@ -41,13 +45,19 @@ class VideoThread(threading.Thread):
 
     def save_recongition_result(self, frame, name):
             timestamp = datetime.datetime.now()
+            recognizedAt = timestamp.strftime("%Y-%m-%d %H:%M:%S")
             time = timestamp.strftime("%Y%m%d%H%M%S")
             imgname = time + ".jpg"
             filename = os.path.join(output_dir, imgname)
             cv2.imwrite(filename, frame)
 
-            record = {"camera": self.alias, "location": self.location, "recognizedAt":timestamp, "frame": "record/" + imgname, "name": name}
+            imgpath = "record/" + imgname
+            record = {"camera": self.alias, "location": self.location, "recognizedAt":recognizedAt, "frame": imgpath, "name": name}
             print(str(record))
+            try:
+                Record.create(id=uuid.uuid1(), name=name, frame=imgpath, recognizedAt=recognizedAt, camera=self.alias, location=self.location)
+            except Exception as e:
+                print(str(e))
 
     def add_overlays(self, frame, faces):
         if faces is not None:
@@ -57,10 +67,13 @@ class VideoThread(threading.Thread):
                               (face_bb[0], face_bb[1]), (face_bb[2], face_bb[3]),
                               (0, 255, 0), 2)
                 # if face.name != "unknown":
-                self.save_recongition_result(frame, face.name)
-                cv2.putText(frame, face.name, (face_bb[0], face_bb[3]),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0),
-                            thickness=2, lineType=2)
+                end_time = time.time()
+                if (end_time - self.start_time) > self.record_interval:
+                    self.save_recongition_result(frame, face.name)
+                    self.start_time = time.time()
+                # cv2.putText(frame, face.name, (face_bb[0], face_bb[3]),
+                #             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0),
+                #             thickness=2, lineType=2)
 
     def __del__(self):
         self.video.release()

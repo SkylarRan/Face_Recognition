@@ -26,3 +26,18 @@ CREATE TABLE `blacklist` (
   `memo` varchar(200) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+-- ----------------------------
+-- Table structure for record
+-- ----------------------------
+DROP TABLE IF EXISTS `record`;
+CREATE TABLE `record` (
+  `id` varchar(36) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `name` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `frame` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `recognizedAt` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `camera` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `location` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC;

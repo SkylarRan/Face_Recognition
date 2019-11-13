@@ -21,7 +21,7 @@ class Video(BaseModel):
     camara_pw=peewee.CharField()
     remark=peewee.TextField()
     stream_url=peewee.CharField()
-
+    rtmp_url=peewee.CharField()
     
 
 class Camara:
@@ -46,10 +46,11 @@ class Camara:
 
 
 class Stream:
-    url=""
-    name=""
-    location=""
-
+    id=0
+    url=''
+    name=''
+    location=''
+    rtmp=''
     def stream2dict(self):
         return {
         'url':self.url,
@@ -60,7 +61,7 @@ class Stream:
 
 class Result:    
     data=[]
-    message=""
+    message=''
     status=True
 
     def result2dict(self):

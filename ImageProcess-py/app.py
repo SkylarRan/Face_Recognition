@@ -1,6 +1,6 @@
 from flask import Flask, make_response, request, jsonify
 import uuid
-from db import Blacklist, database
+from db import Blacklist, Record, database
 from upload import upload_blacklist_image
 from videoThread import VideoThread, stop_thread
 from playhouse.shortcuts import model_to_dict
@@ -32,6 +32,25 @@ def set_response(dic):
 def test():
     response = set_response({'status': True})
     return response
+
+
+@app.route(url_appfix + '/records', methods=['GET', 'OPTIONS'])
+def records():
+    offset = request.args.get("offset")
+    limit = request.args.get("limit")
+    try:
+        total = Record.select().count()
+        records = (Record.select().order_by(Record.recognizedAt)).offset(int(offset)).limit(int(limit))
+        data = []
+        for r in records:
+            data.append(model_to_dict(r))
+        res = {'status': True, 'data': data, 'total': total}
+    except Exception as e:
+        print(e)
+        res = {'status': False, 'message': str(e)}
+    finally:
+        response = set_response(res)
+        return response
 
 
 @app.route(url_appfix + '/blacklists', methods=['GET', 'OPTIONS'])
@@ -146,11 +165,12 @@ def start_recognize():
         rtmp = request.json.get("rtmp") 
         name = request.json.get("name") 
         location = request.json.get("location") 
-        if rtmp is None or name is None or location is None:
+        record_interval = request.json.get("interval") 
+        if rtmp is None or name is None or location is None or record_interval is None:
             response = set_response({'status': False, 'message': 'Parameter error'})
             return response
 
-        t = VideoThread(rtmp, name, location)
+        t = VideoThread(rtmp, name, location, record_interval)
         t.start()
         res = {'status': True, 'data':[t.ident]}
     response = set_response(res)

@@ -52,6 +52,14 @@
             background-color: #fff;
             position: absolute;
         }
+
+        #recordTable label {
+            color: #007bff;
+        }
+
+        #recordTable label:hover {
+            color: #8eaac7;
+        }
     </style>
 </head>
 
@@ -71,9 +79,18 @@
                             Blacklist
                         </button>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-5"></div>
+                    <div class="col-md-1">
                         <div class="recognize" data-toggle="tooltip" data-placement="top" title="start recognizing">
                             <div isopen="false" class="recognize-btn"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group mb-2 mr-sm-2">
+                            <input type="number" class="form-control" id="interval" placeholder="Recording Interval" min="1">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text">mins</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -83,43 +100,16 @@
             <div id="results" class="col-md-12">
                 <div class="card">
                     <div class="card-header">Records</div>
-                    <table class="table">
+                    <table id="recordTable" class="table-hover table-striped">
                         <thead>
                             <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">Name</th>
-                                <th scope="col">RecognizedAt</th>
-                                <th scope="col">Frame</th>
-                                <th scope="col">Camera</th>
-                                <th scope="col">Location</th>
+                                <th data-field="id" data-visible="false">ID</th>
+                                <th data-field="name" data-formatter="nameFormatter">Name</th>
+                                <th data-field="recognizedAt">RecognizedAt</th>
+                                <th data-field="camera">Camera</th>
+                                <th data-field="location">Location</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <th scope="row">1</th>
-                                <td>Mark</td>
-                                <td>Otto</td>
-                                <td>@mdo</td>
-                                <td>xxx</td>
-                                <td>xxx</td>
-                            </tr>
-                            <tr>
-                                <th scope="row">2</th>
-                                <td>Mark</td>
-                                <td>Otto</td>
-                                <td>@mdo</td>
-                                <td>xxx</td>
-                                <td>xxx</td>
-                            </tr>
-                            <tr>
-                                <th scope="row">3</th>
-                                <td>Mark</td>
-                                <td>Otto</td>
-                                <td>@mdo</td>
-                                <td>xxx</td>
-                                <td>xxx</td>
-                            </tr>
-                        </tbody>
                     </table>
                 </div>
             </div>
@@ -307,23 +297,51 @@
         </div>
     </div>
 
+    <div class="modal fade" id="bigImgModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-xl" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="bigImgModalLabel"> </h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <img src="" style="margin: 0 auto;"></img>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
     <script>
         let uploadImg = null;
         let deleteID = null;
         let streams = [];
         let tids = null;
         // let streams = [
-                // {
-                //     url: "http://ivi.bupt.edu.cn/hls/cctv1hd.m3u8",
-                //     name: "cctv1",
-                //     location: "Beijing"
-                // },
-            // ];
+            // {
+            //     url: "http://ivi.bupt.edu.cn/hls/cctv1hd.m3u8",
+            //     name: "cctv1",
+            //     location: "Beijing"
+            // },
+        // ];
 
         let defaultUploadImage = "img/upload.png";
         let imageProcessServer = localStorage.getItem("imageProcessServer");
         let configureServer = localStorage.getItem("configureServer");
         console.log("imageProcessServer:" + imageProcessServer + ", configureServer:" + configureServer);
+        // if(!imageProcessServer){
+        if(!imageProcessServer || !configureServer ){
+            alert("Please test configure server and image process server first!");
+        }
+
+        function nameFormatter(value, row) {
+            let a = '<label frame="'+ row.frame +'" onclick="bigImg(this)">' + value + '</label>';
+            return a;
+        }
 
         function imageFormatter(value) {
             if (value) {
@@ -378,6 +396,15 @@
             }
         }
 
+        function bigImg(a){
+            let name = $(a).html();
+            let frame = $(a).attr('frame');
+            let src = imageProcessServer + "/" + frame;
+            $("#bigImgModalLabel").html(name);
+            $("#bigImgModal img").attr('src', src);
+            $("#bigImgModal").modal('show');
+        }
+
         $(document).ready(function () {
             $('[data-toggle="tooltip"]').tooltip();
 
@@ -387,10 +414,14 @@
                     $('.recognize').attr('data-original-title', 'stop recognizing');
                     $('.recognize-btn').attr('isopen','true').animate({left:'33px'});
                     $('.recognize-btn').parent().css('background-color','#4fafe2');
+
+                    let interval = $("#interval").val();
+
                     let data = {
                         "rtmp": "rtmp://58.200.131.2:1935/livetv/hunantv",
                         "name": "hunan",
-                        "location": "湖南"
+                        "location": "湖南",
+                        "interval": (interval == ""? 10 : parseInt(interval) )
                     };
 
                     $.ajax({
@@ -439,61 +470,75 @@
                 }
             });
 
+            $("#recordTable").bootstrapTable({
+                url: imageProcessServer + '/records',
+                method: 'get',
+                cache: false,
+                pagination: true,
+                pageSize: 5,
+                pageList: [5, 10, 15, 20, 25],
+                sidePagination: 'server',
+                responseHandler: function (res) {
+                    return {
+                        "total": res.total,
+                        "rows": res.data
+                    };
+                }
+            });
+
+            setInterval(function(){
+                $("#recordTable").bootstrapTable('refresh');
+            }, 60000);
             
+            $("#blacklistTable").bootstrapTable({
+                url: imageProcessServer + '/blacklists',
+                method: 'get',
+                cache: false,
+                toolbar: "#blacklistToolbar",
+                pagination: true,
+                pageSize: 5,
+                pageList: [5, 10, 15, 20, 25],
+                sidePagination: 'server',
+                responseHandler: function (res) {
+                    return {
+                        "total": res.total,
+                        "rows": res.data
+                    };
+                }
+            });
 
-            if (imageProcessServer) {
-                $("#blacklistTable").bootstrapTable({
-                    url: imageProcessServer + '/blacklists',
-                    method: 'get',
-                    cache: false,
-                    toolbar: "#blacklistToolbar",
-                    pagination: true,
-                    pageSize: 5,
-                    pageList: [5, 10, 15, 20, 25],
-                    sidePagination: 'server',
-                    responseHandler: function (res) {
-                        return {
-                            "total": res.total,
-                            "rows": res.data
-                        };
-                    }
-                });
-            }
+            // get all streams
+            $.ajax({
+                url: configureServer + "/streams",
+                type: 'get',
+                cache: false,
+                contentType: 'json'
+            }).done( res => {
+                if(res.status){
+                    streams = res.data;
+                    showVideos(streams);
+                }else{
+                    alert(res.message);
+                }
+            })
 
-            if (configureServer) {
-                // get all streams
-                $.ajax({
-                    url: configureServer + "/streams",
-                    type: 'get',
-                    cache: false,
-                    contentType: 'json'
-                }).done( res => {
-                    if(res.status){
-                        streams = res.data;
-                        showVideos(streams);
-                    }else{
-                        alert(res.message);
-                    }
-                })
-
-                $("#configureTable").bootstrapTable({
-                    url: configureServer + '/camaras',
-                    method: 'get',
-                    cache: false,
-                    toolbar: "#configureToolbar",
-                    pagination: true,
-                    pageSize: 10,
-                    pageList: [10],
-                    sidePagination: 'server',
-                    responseHandler: function (res) {
-                        console.log(res);
-                        return {
-                            "total": res.data.length,
-                            "rows": res.data
-                        };
-                    }
-                });
-            }
+            $("#configureTable").bootstrapTable({
+                url: configureServer + '/camaras',
+                method: 'get',
+                cache: false,
+                toolbar: "#configureToolbar",
+                pagination: true,
+                pageSize: 10,
+                pageList: [10],
+                sidePagination: 'server',
+                responseHandler: function (res) {
+                    console.log(res);
+                    return {
+                        "total": res.data.length,
+                        "rows": res.data
+                    };
+                }
+            });
 
             $("#serverForm").validate({
                 rules: {
@@ -710,11 +755,6 @@
                     })
                 }
             });
-
-            
-            
-           
-           
         })
 
         // set backdrop when using multi-modal

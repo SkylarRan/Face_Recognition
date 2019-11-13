@@ -56,5 +56,6 @@ def api_response(dict):
     response.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type'
     return response
 api.startallstream()
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',debug=True, port=5000)
+    app.run(host='0.0.0.0',debug=True, port=5000,use_reloader=False)
