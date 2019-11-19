@@ -9,7 +9,8 @@ class FF_helper:
     ipadress=''
     rtmp_url=''
     __command=['ffmpeg',
-    '-rtsp_transport tcp -i',
+    '-rtsp_transport','tcp',
+    '-i',
     'dsds',
     '-vcodec','libx264',
     '-acodec','aac',
@@ -17,8 +18,8 @@ class FF_helper:
     'rtmp://127.0.0.1:9100/myapp/'
     ]
     def start_process(self):
-        self.__command[2]=self.rtsp_url
-        self.__command[9]+=self.name
+        self.__command[4]=self.rtsp_url
+        self.__command[11]+=self.name
         strmsg=''
         for str in self.__command:
                 strmsg+=str+' '
