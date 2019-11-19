@@ -53,9 +53,11 @@ class Stream:
     rtmp=''
     def stream2dict(self):
         return {
+        'id':self.id,
         'url':self.url,
         'name':self.name,
         'location':self.location,
+        'rtmp':self.rtmp
         }
 
 

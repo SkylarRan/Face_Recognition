@@ -9,7 +9,7 @@ class FF_helper:
     ipadress=''
     rtmp_url=''
     __command=['ffmpeg',
-    '-i',
+    '-rtsp_transport tcp -i',
     'dsds',
     '-vcodec','libx264',
     '-acodec','aac',
