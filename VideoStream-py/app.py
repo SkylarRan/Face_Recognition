@@ -1,8 +1,8 @@
 from flask import Flask,request,abort,make_response,jsonify
 from domain import Result
-from webapi import Camara_Api
+from webapi import Camera_Api
 app = Flask(__name__)
-api=Camara_Api()
+api=Camera_Api()
 
 @app.route('/api/v1.0/test', methods=['Get', 'OPTIONS'])
 def api_test():
@@ -12,33 +12,33 @@ def api_test():
     result.message=""
     return api_response(result.result2dict())
 
-@app.route('/api/v1.0/camaras', methods=['Get', 'OPTIONS'])
-def camaralist():
+@app.route('/api/v1.0/cameras', methods=['Get', 'OPTIONS'])
+def cameralist():
     result=api.getlist()
     return api_response(result)
 
-@app.route('/api/v1.0/camaras/<int:camara_id>', methods=['Get', 'OPTIONS'])
-def camara(camara_id):
-    result=api.get(camara_id)
+@app.route('/api/v1.0/cameras/<int:camera_id>', methods=['Get', 'OPTIONS'])
+def camera(camera_id):
+    result=api.get(camera_id)
     return api_response(result)
 
-@app.route('/api/v1.0/camaras/add', methods=['Post', 'OPTIONS'])
-def camaraAdd():
+@app.route('/api/v1.0/cameras/add', methods=['Post', 'OPTIONS'])
+def cameraAdd():
     if not request.form:
         abort(400)
     result=api.add(request.form)
     return api_response(result)
 
-@app.route('/api/v1.0/camaras/edit', methods=['Post', 'OPTIONS'])
-def camaraEdit():
+@app.route('/api/v1.0/cameras/edit', methods=['Post', 'OPTIONS'])
+def cameraEdit():
     if not request.form:
         abort(400)
     result=api.edit(request.form)
     return api_response(result)
 
 
-@app.route('/api/v1.0/camaras/delete', methods=['Post', 'OPTIONS'])
-def camaraDelete():
+@app.route('/api/v1.0/cameras/delete', methods=['Post', 'OPTIONS'])
+def cameraDelete():
     if not request.form:
         abort(400)
     result=api.delete(request.form)
@@ -55,7 +55,7 @@ def api_response(dict):
     response.headers['Access-Control-Allow-Methods'] = 'OPTIONS,HEAD,GET,POST'
     response.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type'
     return response
-api.startallstream()
 
+api.startallstream()
 if __name__ == '__main__':
     app.run(host='0.0.0.0',debug=True, port=5000,use_reloader=False)

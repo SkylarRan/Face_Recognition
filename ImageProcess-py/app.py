@@ -1,7 +1,7 @@
 from flask import Flask, make_response, request, jsonify
 import uuid
 from db import Blacklist, Record, database
-from upload import upload_blacklist_image
+from imgUtil import upload_blacklist_image, remove_image
 from videoThread import VideoThread, stop_thread
 from playhouse.shortcuts import model_to_dict
 
@@ -115,6 +115,7 @@ def delete_blacklist():
     try:
         b = Blacklist.get(Blacklist.id == id)
         b.delete_instance()
+        remove_image("blacklist",id)
         res = {'status': True}
         print("delete success:" + id)
     except Exception as e:
@@ -127,8 +128,9 @@ def delete_blacklist():
 
 def add_blacklist(name, image, memo):
     try:
-        path = upload_blacklist_image(image)
-        Blacklist.create(id=uuid.uuid1(), name=name, memo=memo, image=path)
+        id=str(uuid.uuid1())
+        path = upload_blacklist_image(image, id)
+        Blacklist.create(id=id, name=name, memo=memo, image=path)
         res = {'status': True}
     except Exception as e:
         print(e)
@@ -144,7 +146,7 @@ def edit_blacklist(id, name, image, memo):
                      .update({Blacklist.name: name, Blacklist.memo: memo})
                      .where(Blacklist.id == id))
         else:
-            path = upload_blacklist_image(image)
+            path = upload_blacklist_image(image, id)
             query = (Blacklist
                      .update({Blacklist.name: name, Blacklist.memo: memo, Blacklist.image: path})
                      .where(Blacklist.id == id))
@@ -192,4 +194,4 @@ def stop_recognize():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0')

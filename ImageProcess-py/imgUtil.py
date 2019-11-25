@@ -9,7 +9,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
-def upload_blacklist_image(file):
+def upload_blacklist_image(file, id):
     if not (file and allowed_file(file.filename)):
         raise FormatError("Image format error!")
 
@@ -17,8 +17,13 @@ def upload_blacklist_image(file):
     if not os.path.exists(folder):
         os.makedirs(folder)
 
-    filename = str(uuid.uuid1()) + ".jpg"
+    filename = id + ".jpg"
     fullname = os.path.join(folder, filename)
     file.save(fullname)
     return "blacklist/" + filename
+
+def remove_image(category, id):
+    filename = "static/" + category + "/" + id + ".jpg"
+    if os.path.exists(filename):
+        os.remove(filename)
 

@@ -13,34 +13,34 @@ class BaseModel(peewee.Model):
         database.close()
 
 class Video(BaseModel):
-    id=peewee.IntegerField()
-    camara_url=peewee.CharField()
+    id=peewee.CharField()
+    camera_url=peewee.CharField()
     name=peewee.CharField()
     location=peewee.CharField()
-    camara_id=peewee.CharField()
-    camara_pw=peewee.CharField()
+    camera_id=peewee.CharField()
+    camera_pw=peewee.CharField()
     remark=peewee.TextField()
     stream_url=peewee.CharField()
     rtmp_url=peewee.CharField()
     
 
-class Camara:
+class Camera:
     id=0
     url=""
     name=""
     location=""
-    camara_id=""
-    camara_pw=""
+    camera_id=""
+    camera_pw=""
     memo=""
 
-    def camara2dict(self):
+    def camera2dict(self):
         return {
         'id':self.id,
         'url':self.url,
         'name':self.name,
         'location':self.location,
-        'camara_id':self.camara_id,
-        'camara_pw':self.camara_pw,
+        'camera_id':self.camera_id,
+        'camera_pw':self.camera_pw,
         'memo':self.memo
         }
 

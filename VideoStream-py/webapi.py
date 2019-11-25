@@ -1,30 +1,35 @@
-from domain import Video,Result,Camara,Stream
-from helper import FF_helper
-from flask import current_app
-import socket
 import json
+import socket
 import sys
-class Camara_Api():
+import uuid
+
+from flask import current_app
+
+from domain import Camera, Result, Stream, Video
+from helper import FF_helper
+
+
+class Camera_Api():
 
     __fhelper=FF_helper()
 
-    def get(self,camara_id):
+    def get(self,camera_id):
         result=Result()
         result.data=[]
         result.status=False
         result.message=""
         try:
-            if camara_id<=0:
-                result.message="camara doesn't exist"
+            if camera_id=='':
+                result.message="camera doesn't exist"
                 return result.result2dict() 
             Video.connect()
-            v1=Video.get_or_none(Video.id==camara_id)
+            v1=Video.get_or_none(Video.id==camera_id)
             Video.close()
             if not v1:
-                result.message="camara doesn't exist"
+                result.message="camera doesn't exist"
                 return result.result2dict()
-            camara=self.video2camara(v1)
-            result.data.append(camara.camara2dict())
+            camera=self.video2camera(v1)
+            result.data.append(camera.camera2dict())
             result.status=True
             return result.result2dict()
         except:
@@ -37,17 +42,17 @@ class Camara_Api():
         result.data=[]
         result.status=False
         try:
-            if not 'id' in data or int(data['id'])<=0 or not data['id']:
+            if not 'id' in data or not data['id']:
                 result.message="Data error,id dosen't exist"
                 return result.result2dict()
             Video.connect()
             v=Video.get(id=data['id'])
             Video.delete().where(Video.id==data['id']).execute()
             Video.close()
-            self.__fhelper.name=v.name
+            self.__fhelper.name=v.id
             pid=0
             for f in self.__fhelper.flist:
-                if f['name']==v.name:
+                if f['name']==v.id:
                     pid=f['pid']
                     break
             self.__fhelper.end_process(pid)
@@ -72,18 +77,20 @@ class Camara_Api():
         if not 'location' in data or data['location']=='' or not data['location']:
             result.message="Data error,location dosen't exist"
             return result.result2dict()
+        uid = str(uuid.uuid4())
+        suid = ''.join(uid.split('-'))
         Video.connect()
-        Video.create(camara_url=data['url'],name=data['name'],location=data['location'],camara_id=data['camara_id'],camara_pw=data['camara_pw'],remark=data['memo']
-        ,stream_url='http://'+self.__fhelper.ipadress+':9001/live?port=9100&app=myapp&stream='+data['name'],
-        rtmp_url='rtmp://'+self.__fhelper.ipadress+':9100/myapp/'+data['name'])
+        Video.create(id=suid,camera_url=data['url'],name=data['name'],location=data['location'],camera_id=data['camera_id'],camera_pw=data['camera_pw'],remark=data['memo']
+        ,stream_url='http://'+self.__fhelper.ipadress+':9001/live?port=9100&app=myapp&stream='+suid,
+        rtmp_url='rtmp://'+self.__fhelper.ipadress+':9100/myapp/'+suid)
         Video.close()
         stream=Stream()
-        stream.id=Video.get(name=data['name']).id
+        stream.id=suid
         stream.name=data['name']
-        stream.url='http://'+self.__fhelper.ipadress+':9001/live?port=9100&app=myapp&stream='+data['name']
+        stream.url='http://'+self.__fhelper.ipadress+':9001/live?port=9100&app=myapp&stream='+suid
         stream.location=data['location']
-        stream.rtmp='rtmp://'+self.__fhelper.ipadress+':9100/myapp/'+data['name']
-        self.__fhelper.name=data['name']
+        stream.rtmp='rtmp://'+self.__fhelper.ipadress+':9100/myapp/'+suid
+        self.__fhelper.name=suid
         self.__fhelper.rtsp_url=data['url']
         self.__fhelper.start_process()
         result.data.append(stream.stream2dict())
@@ -96,8 +103,8 @@ class Camara_Api():
         result.data=[]
         result.status=False
         try:
-            if not 'id' in data or int(data['id'])<=0 or not data['id']:
-                result.message="Data error,url dosen't exist"
+            if not 'id' in data  or not data['id']:
+                result.message="Data error,id dosen't exist"
                 return result.result2dict()
             if not 'url' in data or data['url']=='' or not data['url']:
                 result.message="Data error,url dosen't exist"
@@ -110,27 +117,25 @@ class Camara_Api():
                 return result.result2dict()
             v1=Video.get(id=data['id'])
             if not v1:
-                result.message="camara doesn't exist"
+                result.message="camera doesn't exist"
                 return result.result2dict()
-            if v1.name!=data['name'] :
-                self.__fhelper.name=v1.name
+            if v1.camera_url!=data['url']:
+                self.__fhelper.name=v1.id
                 pid=0
                 for f in self.__fhelper.flist:
-                    if f['name']==v1.name:
+                    if f['name']==v1.id:
                         pid=f['pid']
                         break
                 self.__fhelper.end_process(pid)
-                self.__fhelper.name=data['name']
+                self.__fhelper.name=v1.id
                 self.__fhelper.rtsp_url=data['url']
                 self.__fhelper.start_process()
             v1.name=data['name']
-            v1.camara_url=data['url']
+            v1.camera_url=data['url']
             v1.location=data['location']
-            v1.camara_id=data['camara_id']
-            v1.camara_pw=data['camara_pw']
+            v1.camera_id=data['camera_id']
+            v1.camera_pw=data['camera_pw']
             v1.remark=data['memo']
-            v1.stream_url='http://'+self.__fhelper.ipadress+':9001/live?port=9100&app=myapp&stream='+data['name']
-            v1.rtmp_url='rtmp://'+self.__fhelper.ipadress+':9100/myapp/'+data['name']
             v1.save()
             stream=self.video2stream(v1)
             result.data.append(stream.stream2dict())
@@ -152,11 +157,11 @@ class Camara_Api():
             vlist=Video.select()
             Video.close()
             if not vlist:
-                result.message="camara doesn't exist"
+                result.message="camera doesn't exist"
                 return result.result2dict()
             for v1 in vlist:
-                camara=self.video2camara(v1)
-                result.data.append(camara.camara2dict())
+                camera=self.video2camera(v1)
+                result.data.append(camera.camera2dict())
             result.status=True
             return result.result2dict()
         except:
@@ -195,19 +200,19 @@ class Camara_Api():
         finally:
             s.close()
         for v in vlist:
-            self.__fhelper.name=v.name
-            self.__fhelper.rtsp_url=v.camara_url
+            self.__fhelper.name=v.id
+            self.__fhelper.rtsp_url=v.camera_url
             self.__fhelper.start_process()
        
     @staticmethod
-    def video2camara(video):
-        camara=Camara()
-        camara.id=video.id
-        camara.location=video.location
-        camara.memo=video.remark
-        camara.name=video.name
-        camara.url=video.camara_url
-        return camara
+    def video2camera(video):
+        camera=Camera()
+        camera.id=video.id
+        camera.location=video.location
+        camera.memo=video.remark
+        camera.name=video.name
+        camera.url=video.camera_url
+        return camera
     
     @staticmethod
     def video2stream(video):
@@ -218,6 +223,3 @@ class Camara_Api():
         stream.name=video.name
         stream.id=video.id
         return stream
-
-
-   

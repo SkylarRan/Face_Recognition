@@ -143,8 +143,8 @@
                                 <th data-field="name">Name</th>
                                 <th data-field="location">Location</th>
                                 <th data-field="url">RTSP Address</th>
-                                <th data-field="camara_id">Username</th>
-                                <th data-field="camara_pw">Password</th>
+                                <th data-field="camera_id">Username</th>
+                                <th data-field="camera_pw">Password</th>
                                 <th data-field="memo">Memo</th>
                             </tr>
                         </thead>
@@ -169,8 +169,8 @@
                     <div class="modal-body">
                             <input type="text" name="id" hidden>
                             <input type="text" class="form-control mb-3" name="url" placeholder="RTSP URL">
-                            <input type="text" class="form-control mb-3" name="camara_id" placeholder="Username">
-                            <input type="text" class="form-control mb-3" name="camara_pw" placeholder="Password">
+                            <input type="text" class="form-control mb-3" name="camera_id" placeholder="Username">
+                            <input type="text" class="form-control mb-3" name="camera_pw" placeholder="Password">
                             <input type="text" class="form-control mb-3" name="location" placeholder="Location">
                             <input type="text" class="form-control mb-3" name="name" placeholder="Alias">
                             <input type="text" class="form-control mb-3" name="memo" placeholder="Memo">
@@ -323,12 +323,13 @@
         let tids = null;
         // let streams = [
             // {
-            //     url: "http://ivi.bupt.edu.cn/hls/cctv1hd.m3u8",
-            //     name: "cctv1",
-            //     location: "Beijing"
+                    // id: "98d0a2845ef04ea39b5491fc02a42bc3",
+                    // location: "BXC",
+                    // name: "skylar",
+                    // rtmp: "rtmp://10.180.3.82:9100/myapp/98d0a2845ef04ea39b5491fc02a42bc3",
+                    // url: "http://10.180.3.82:9001/live?port=9100&app=myapp&stream=98d0a2845ef04ea39b5491fc02a42bc3"
             // },
         // ];
-
         let defaultUploadImage = "img/upload.png";
         let imageProcessServer = localStorage.getItem("imageProcessServer");
         let configureServer = localStorage.getItem("configureServer");
@@ -362,14 +363,14 @@
             }
         }
 
-        function showVideos(strams){
-            streams.forEach(function (value, index) {
-                let video = '<div class="col-md-3">' +
+        function showVideos(streams){
+            streams.forEach(function (value) {
+                let video = '<div class="col-md-3" id="div-' + value.id + '">' +
                             '   <div class="card mb-4 shadow-sm">' +
-                            '       <video id="videoElement' + index + '" height="200px">' +
+                            '       <video id="' + value.id + '" height="200px">' +
                             '           Your browser is too old which doesn\'t support HTML5 video.' +
                             '       </video>' +
-                            '       <div class="card-body">' +
+                            '       <div class="card-body" style="padding:0.5rem 1rem;">' +
                             '           <p class="text-muted">'+ value.name + ' ' + value.location + '</p>' +
                             '       </div' +
                             '   </div>' +
@@ -379,21 +380,59 @@
             });
 
             if (flvjs.isSupported()) {
-                streams.forEach(function (value, index) {
+                streams.forEach(function (value) {
                     console.log("flv:" + value.url);
-                    let videoElement = document.getElementById('videoElement' + index);
+                    let videoElement = document.getElementById(value.id);
 
                     let flvPlayer = flvjs.createPlayer({
                         type: 'flv',
+                        isLive: true,
+                        hasAudio: false,
                         url: value.url
                     });
-                        // url: 'http://10.180.3.82:9001/live?port=9100&app=myapp&stream=test'
-
                     flvPlayer.attachMediaElement(videoElement);
                     flvPlayer.load();
                     flvPlayer.play();
                 });
             }
+        }
+
+        function addVideo(stream){
+            let video = '<div class="col-md-3" id="div-' + stream.id + '">' +
+                            '   <div class="card mb-4 shadow-sm">' +
+                            '       <video id="' + stream.id + '" height="200px">' +
+                            '           Your browser is too old which doesn\'t support HTML5 video.' +
+                            '       </video>' +
+                            '       <div class="card-body" style="padding:0.5rem 1rem;">' +
+                            '           <p class="text-muted">'+ stream.name + ' ' + stream.location + '</p>' +
+                            '       </div' +
+                            '   </div>' +
+                            '</div>'
+
+            $("#cameras").append(video);
+            if (flvjs.isSupported()) {
+                console.log("flv:" + stream.url);
+                let videoElement = document.getElementById(stream.id);
+
+                let flvPlayer = flvjs.createPlayer({
+                    type: 'flv',
+                    isLive: true,
+                    hasAudio: false,
+                    url: stream.url
+                });
+                flvPlayer.attachMediaElement(videoElement);
+                flvPlayer.load();
+                flvPlayer.play();
+            }
+        }
+
+        function updateVideo(stream){
+            removeVideo(stream.id);
+            addVideo(stream);
+        }
+
+        function removeVideo(id){
+            $("#div-" + id).remove();
         }
 
         function bigImg(a){
@@ -523,7 +562,7 @@
             })
 
             $("#configureTable").bootstrapTable({
-                url: configureServer + '/camaras',
+                url: configureServer + '/cameras',
                 method: 'get',
                 cache: false,
                 toolbar: "#configureToolbar",
@@ -628,10 +667,10 @@
                 let $table = null;
                 
                 if($("#configureModal").hasClass('show')){
-                    url = configureServer + "/camaras/delete";
+                    url = configureServer + "/cameras/delete";
                     $table = $("#configureTable");
                 }else if($("#blacklistModal").hasClass('show')){
-                    url = configureServer + "/blacklist/delete";
+                    url = imageProcessServer + "/blacklist/delete";
                     $table = $("#blacklistTable");
                 }
                 
@@ -649,6 +688,9 @@
                 }).done(res => {
                     if (res.status) {
                         $table.bootstrapTable('refresh');
+                        if(url.indexOf('cameras') > -1){
+                            removeVideo(deleteID);
+                        }
                     } else {
                         alert(res.message);
                     }
@@ -691,6 +733,10 @@
             });
 
             $("#configureToolbar .add").click(function () {
+                if(streams.length == 8){
+                    alert("At  most add up to 8 cameras");
+                    return;
+                }
                 $("#configureFormModalLabel").html("Add Configure");
                 $("#configureForm")[0].reset();
                 $("#configureFormModal").modal('show');
@@ -724,7 +770,19 @@
                 rules:{
                     url: 'required',
                     location: 'required',
-                    name: 'required',
+                    name: 'required'
+                    // name: {
+                    //     required: true,
+                    //     onkeyup: function(element, event) {
+                    //         console.log(element.value);
+                    //         for(let i = 0; i<streams.length; i++){
+                    //             if(streams[i].name == element.value){
+                    //                 return false
+                    //             }
+                    //         }
+                    //         return true
+                    //     },
+                    // },
                 },
                 errorClass: "is-invalid",
                 submitHandler: function (form) {
@@ -733,7 +791,7 @@
                     let methodName = title.startsWith('Add')? 'add':'edit';
                     let formData = new FormData(form);
                     $.ajax({
-                        url: configureServer + "/camaras/" + methodName,
+                        url: configureServer + "/cameras/" + methodName,
                         type: 'post',
                         data: formData,
                         dataType: 'json',
@@ -742,8 +800,19 @@
                         contentType: false
                     }).done( res => {
                         if(res.status){
-                            streams.push(res.data[0]);
-                            alert("success");
+                            let stream = res.data[0];
+                            if(methodName == 'add'){
+                                streams.push(stream);
+                                addVideo(stream);
+                            }else{
+                                for(let i = 0; i <streams.length; i++){
+                                    if(streams[i].id == stream.id){
+                                        streams[i] = stream;
+                                    }
+                                }
+                                updateVideo(stream);
+                            }
+
                             $("#configureTable").bootstrapTable('refresh');
                             $("#configureFormModal").modal('hide');
                         }else{
