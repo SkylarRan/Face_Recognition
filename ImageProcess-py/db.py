@@ -29,6 +29,7 @@ class Record(BaseModel):
     frame = CharField()
     recognizedAt = CharField()
     camera = CharField()
+    cam_id = CharField()
     location = CharField()
 
     class Meta:

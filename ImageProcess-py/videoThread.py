@@ -17,9 +17,10 @@ frame_interval = 5
 
 
 class VideoThread(threading.Thread):
-    def __init__(self, rtmp, alias, location, record_interval):
+    def __init__(self, cam_id, rtmp, alias, location, record_interval):
         super(VideoThread, self).__init__()
         self.video = cv2.VideoCapture(rtmp)
+        self.cam_id = cam_id
         self.alias = alias
         self.location = location
         self.record_interval = record_interval * 60
@@ -52,7 +53,7 @@ class VideoThread(threading.Thread):
             cv2.imwrite(filename, frame)
 
             imgpath = "record/" + imgname
-            record = {"camera": self.alias, "location": self.location, "recognizedAt":recognizedAt, "frame": imgpath, "name": name}
+            record = {"cam_id": self.cam_id, "camera": self.alias, "location": self.location, "recognizedAt":recognizedAt, "frame": imgpath, "name": name}
             print(str(record))
             try:
                 Record.create(id=uuid.uuid1(), name=name, frame=imgpath, recognizedAt=recognizedAt, camera=self.alias, location=self.location)

@@ -164,17 +164,19 @@ def edit_blacklist(id, name, image, memo):
 def start_recognize():
     res = {'status': True}
     if request.method != 'OPTIONS':
-        rtmp = request.json.get("rtmp") 
-        name = request.json.get("name") 
-        location = request.json.get("location") 
+        # rtmp = request.json.get("rtmp") 
+        # name = request.json.get("name") 
+        # location = request.json.get("location") 
         record_interval = request.json.get("interval") 
-        if rtmp is None or name is None or location is None or record_interval is None:
-            response = set_response({'status': False, 'message': 'Parameter error'})
-            return response
+        streams = request.json.get("streams")
+        pids = []
+        for s in streams:
+            if s.rtmp and s.name and s.location and record_interval:
+                p = VideoThread(s.id, s.rtmp, s.name, s.location, record_interval)
+                p.start()
+                pids.append(p.ident)
 
-        t = VideoThread(rtmp, name, location, record_interval)
-        t.start()
-        res = {'status': True, 'data':[t.ident]}
+        res = {'status': True, 'data': pids}
     response = set_response(res)
     return response
 
@@ -185,7 +187,8 @@ def stop_recognize():
     if request.method != 'OPTIONS':
         tids = request.json.get("tids") 
         try:
-            stop_thread(tids[0])
+            for i in range(len(tids)):
+                stop_thread(tids[i])
         except Exception as e:
             res = {'status': False, 'message': str(e)}
         print("stoped")

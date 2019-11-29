@@ -457,9 +457,7 @@
                     let interval = $("#interval").val();
 
                     let data = {
-                        "rtmp": "rtmp://58.200.131.2:1935/livetv/hunantv",
-                        "name": "hunan",
-                        "location": "湖南",
+                        "streams": streams,
                         "interval": (interval == ""? 10 : parseInt(interval) )
                     };
 
