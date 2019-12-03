@@ -298,7 +298,7 @@
     </div>
 
     <div class="modal fade" id="bigImgModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-dialog modal-xl" role="document" style="width: 680px;">
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title" id="bigImgModalLabel"> </h5>
@@ -306,11 +306,8 @@
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="align-content: center;">
               <img src="" style="margin: 0 auto;"></img>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>
           </div>
         </div>
@@ -444,18 +441,65 @@
             $("#bigImgModal").modal('show');
         }
 
+        function stopRecognize(tids){
+            let data = {
+                "tids": tids
+            }
+            $.ajax({
+                url: imageProcessServer + "/recognize/stop",
+                type: 'post',
+                data: JSON.stringify(data),
+                dataType: 'json',
+                cache: false,
+                processData: false,
+                contentType: 'application/json'
+            }).done( res => {
+                if(!res.status){
+                    alert(res.message);
+                }
+            }).fail( res => {
+                alert(res)
+            })
+        }
+
+        function getStreams(){
+            // get all streams
+            $.ajax({
+                url: configureServer + "/streams",
+                type: 'get',
+                cache: false,
+                contentType: 'json'
+            }).done( res => {
+                if(res.status){
+                    streams = res.data;
+                }else{
+                    streams = [];
+                    alert(res.message);
+                }
+            })
+        }
+
         $(document).ready(function () {
             $('[data-toggle="tooltip"]').tooltip();
 
+            getStreams();
+            showVideos(streams);
+
             $('.recognize').on('click',function(){
                 if ($('.recognize-btn').attr('isopen') == 'false') {
+                    
+                    if(streams.length == 0){
+                        alert("No useful stream");
+                        return;
+                    }
+
                     // start recognize
                     $('.recognize').attr('data-original-title', 'stop recognizing');
                     $('.recognize-btn').attr('isopen','true').animate({left:'33px'});
                     $('.recognize-btn').parent().css('background-color','#4fafe2');
 
                     let interval = $("#interval").val();
-
+                    
                     let data = {
                         "streams": streams,
                         "interval": (interval == ""? 10 : parseInt(interval) )
@@ -485,24 +529,7 @@
                     $('.recognize-btn').attr('isopen','false').animate({left:'3px'});
                     $('.recognize-btn').parent().css('background-color','#838383');
 
-                    let data = {
-                        "tids": tids
-                    }
-                    $.ajax({
-                        url: imageProcessServer + "/recognize/stop",
-                        type: 'post',
-                        data: JSON.stringify(data),
-                        dataType: 'json',
-                        cache: false,
-                        processData: false,
-                        contentType: 'application/json'
-                    }).done( res => {
-                        if(!res.status){
-                            alert(res.message);
-                        }
-                    }).fail( res => {
-                        alert(res)
-                    })
+                    stopRecognize(tids);
 
                 }
             });
@@ -543,21 +570,6 @@
                     };
                 }
             });
-
-            // get all streams
-            $.ajax({
-                url: configureServer + "/streams",
-                type: 'get',
-                cache: false,
-                contentType: 'json'
-            }).done( res => {
-                if(res.status){
-                    streams = res.data;
-                    showVideos(streams);
-                }else{
-                    alert(res.message);
-                }
-            })
 
             $("#configureTable").bootstrapTable({
                 url: configureServer + '/cameras',
@@ -688,6 +700,7 @@
                         $table.bootstrapTable('refresh');
                         if(url.indexOf('cameras') > -1){
                             removeVideo(deleteID);
+                            getStreams();
                         }
                     } else {
                         alert(res.message);
@@ -843,6 +856,24 @@
             });
             $('.modal.fade:visible:last').focus().next('.modal-backdrop.fade').removeClass('hidden');
         }
+        
+        window.onbeforeunload = onbeforeunload_handler;   
+        window.onunload = onunload_handler;   
+        function onbeforeunload_handler()
+        {   
+            if(tids != null){
+                stopRecognize(tids);
+            }
+            
+            var warning="Confirm to leave?";           
+            return warning;   
+        }   
+        
+        function onunload_handler()
+        {   
+            var warning="Bye bye";   
+            alert(warning);   
+        } 
     </script>
 </body>
 

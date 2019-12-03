@@ -40,7 +40,7 @@ def records():
     limit = request.args.get("limit")
     try:
         total = Record.select().count()
-        records = (Record.select().order_by(Record.recognizedAt)).offset(int(offset)).limit(int(limit))
+        records = (Record.select().order_by(Record.recognizedAt.desc())).offset(int(offset)).limit(int(limit))
         data = []
         for r in records:
             data.append(model_to_dict(r))
@@ -164,19 +164,17 @@ def edit_blacklist(id, name, image, memo):
 def start_recognize():
     res = {'status': True}
     if request.method != 'OPTIONS':
-        # rtmp = request.json.get("rtmp") 
-        # name = request.json.get("name") 
-        # location = request.json.get("location") 
         record_interval = request.json.get("interval") 
         streams = request.json.get("streams")
-        pids = []
-        for s in streams:
-            if s.rtmp and s.name and s.location and record_interval:
-                p = VideoThread(s.id, s.rtmp, s.name, s.location, record_interval)
+        if streams and len(streams) > 0:
+            pids = []
+            for s in streams:
+                p = VideoThread(s['id'], s['rtmp'], s['name'], s['location'], record_interval)
                 p.start()
                 pids.append(p.ident)
-
-        res = {'status': True, 'data': pids}
+            res = {'status': True, 'data': pids}
+        else:
+            res = {'status': False, 'message': 'No useful stream'}
     response = set_response(res)
     return response
 
@@ -185,13 +183,16 @@ def start_recognize():
 def stop_recognize():
     res = {'status': True}
     if request.method != 'OPTIONS':
-        tids = request.json.get("tids") 
-        try:
-            for i in range(len(tids)):
-                stop_thread(tids[i])
-        except Exception as e:
-            res = {'status': False, 'message': str(e)}
-        print("stoped")
+        tids = request.json.get("tids")
+        if not tids:
+            res = {'status': False, 'message': 'invalid Paramters.'}
+        else:
+            try:
+                for i in range(len(tids)):
+                    stop_thread(tids[i])
+            except Exception as e:
+                res = {'status': False, 'message': str(e)}
+            print("stoped")
     response = set_response(res)
     return response
 

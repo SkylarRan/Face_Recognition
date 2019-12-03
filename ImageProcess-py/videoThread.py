@@ -56,7 +56,7 @@ class VideoThread(threading.Thread):
             record = {"cam_id": self.cam_id, "camera": self.alias, "location": self.location, "recognizedAt":recognizedAt, "frame": imgpath, "name": name}
             print(str(record))
             try:
-                Record.create(id=uuid.uuid1(), name=name, frame=imgpath, recognizedAt=recognizedAt, camera=self.alias, location=self.location)
+                Record.create(id=uuid.uuid1(), name=name, frame=imgpath, recognizedAt=recognizedAt, camera=self.alias, location=self.location,cam_id=self.cam_id)
             except Exception as e:
                 print(str(e))
 
