@@ -462,7 +462,7 @@
             })
         }
 
-        function getStreams(){
+        function getStreams(playStatus){
             // get all streams
             $.ajax({
                 url: configureServer + "/streams",
@@ -472,6 +472,9 @@
             }).done( res => {
                 if(res.status){
                     streams = res.data;
+                    if(playStatus){
+                        showVideos(streams);
+                    }
                 }else{
                     streams = [];
                     alert(res.message);
@@ -482,8 +485,7 @@
         $(document).ready(function () {
             $('[data-toggle="tooltip"]').tooltip();
 
-            getStreams();
-            showVideos(streams);
+            getStreams(true);
 
             $('.recognize').on('click',function(){
                 if ($('.recognize-btn').attr('isopen') == 'false') {
