@@ -364,7 +364,7 @@
             streams.forEach(function (value) {
                 let video = '<div class="col-md-3" id="div-' + value.id + '">' +
                             '   <div class="card mb-4 shadow-sm">' +
-                            '       <video id="' + value.id + '" height="200px">' +
+                            '       <video id="' + value.id + '" height="200px" muted>' +
                             '           Your browser is too old which doesn\'t support HTML5 video.' +
                             '       </video>' +
                             '       <div class="card-body" style="padding:0.5rem 1rem;">' +
@@ -379,17 +379,44 @@
             if (flvjs.isSupported()) {
                 streams.forEach(function (value) {
                     console.log("flv:" + value.url);
-                    let videoElement = document.getElementById(value.id);
+                    let video = videoElement = document.getElementById(value.id);
 
                     let flvPlayer = flvjs.createPlayer({
                         type: 'flv',
                         isLive: true,
+                        enableWorker: true,
+                        enableStashBuffer: false,
+                        stashInitialSize: 128,
                         hasAudio: false,
                         url: value.url
                     });
                     flvPlayer.attachMediaElement(videoElement);
                     flvPlayer.load();
-                    flvPlayer.play();
+                    console.log(video.currentTime);
+                    setTimeout(() => {
+                        flvPlayer.play();
+                    }, 2000)
+
+                    setInterval(() => {
+                        if (!video.buffered.length) {
+                            return;
+                        }
+                        let end = video.buffered.end(0);
+                        // console.log(end);
+                        let diff = end - video.currentTime;
+                        // console.log(video.currentTime);
+                        if (diff >= 1.5 || diff < 0) {
+                            video.currentTime = end;
+                        }
+                    }, 10000);
+
+                    flvPlayer.on(flvjs.Events.ERROR, (errType, errDetail) => { 
+                        // errType是 NetworkError时，对应errDetail有：Exception、HttpStatusCodeInvalid、ConnectingTimeout、EarlyEof、UnrecoverableEarlyEof
+                        // errType是 MediaError时，对应errDetail是MediaMSEError
+                        console.log(errType)
+                    });
+
+
                 });
             }
         }
