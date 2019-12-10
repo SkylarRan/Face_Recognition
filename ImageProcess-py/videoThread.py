@@ -26,12 +26,16 @@ class VideoThread(threading.Thread):
         self.record_interval = record_interval * 60
         self.start_time = time.time()
         self.frameCount = 0
+        self.isRecognizing = True
 
     def run(self):
         print("begin recognize")
-        while True:
+        while self.isRecognizing:
             self.recognize()
         print("end recognize")
+
+    def stop(self):
+        self.isRecognizing = False
 
     def recognize(self):
         _, frame = self.video.read()

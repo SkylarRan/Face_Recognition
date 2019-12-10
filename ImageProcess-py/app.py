@@ -8,6 +8,7 @@ from playhouse.shortcuts import model_to_dict
 app = Flask(__name__, static_url_path='/api/v1.0')
 url_appfix = "/api/v1.0"
 
+video_threads = []
 
 @app.before_request
 def before_request():
@@ -167,32 +168,29 @@ def start_recognize():
         record_interval = request.json.get("interval") 
         streams = request.json.get("streams")
         if streams and len(streams) > 0:
-            pids = []
+            global video_threads
             for s in streams:
-                p = VideoThread(s['id'], s['rtmp'], s['name'], s['location'], record_interval)
-                p.start()
-                pids.append(p.ident)
-            res = {'status': True, 'data': pids}
+                v = VideoThread(s['id'], s['rtmp'], s['name'], s['location'], record_interval)
+                v.start()
+                video_threads.append(v)
         else:
             res = {'status': False, 'message': 'No useful stream'}
     response = set_response(res)
     return response
 
 
-@app.route(url_appfix + '/recognize/stop', methods=['POST', 'OPTIONS'])
+@app.route(url_appfix + '/recognize/stop', methods=['GET', 'OPTIONS'])
 def stop_recognize():
     res = {'status': True}
     if request.method != 'OPTIONS':
-        tids = request.json.get("tids")
-        if not tids:
-            res = {'status': False, 'message': 'invalid Paramters.'}
-        else:
-            try:
-                for i in range(len(tids)):
-                    stop_thread(tids[i])
-            except Exception as e:
-                res = {'status': False, 'message': str(e)}
+        try:
+            global video_threads
+            for v in video_threads:
+                v.stop()
             print("stoped")
+            video_threads = []
+        except Exception as e:
+            res = {'status': False, 'message': str(e)}
     response = set_response(res)
     return response
 

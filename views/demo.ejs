@@ -317,7 +317,6 @@
         let uploadImg = null;
         let deleteID = null;
         let streams = [];
-        let tids = null;
         // let streams = [
             // {
                     // id: "98d0a2845ef04ea39b5491fc02a42bc3",
@@ -468,20 +467,31 @@
             $("#bigImgModal").modal('show');
         }
 
-        function stopRecognize(tids){
-            let data = {
-                "tids": tids
+        function recognizeBtn(status){
+            if(status == 'on'){
+                // start recognize
+                $('.recognize').attr('data-original-title', 'stop recognizing');
+                $('.recognize-btn').attr('isopen','true').animate({left:'33px'});
+                $('.recognize-btn').parent().css('background-color','#4fafe2');
             }
+
+            if(status == 'off'){
+                // stop recognize
+                $('.recognize').attr('data-original-title', 'start recognizing');
+                $('.recognize-btn').attr('isopen','false').animate({left:'3px'});
+                $('.recognize-btn').parent().css('background-color','#838383');
+            }
+        }
+	
+        function stopRecognize(){
             $.ajax({
                 url: imageProcessServer + "/recognize/stop",
-                type: 'post',
-                data: JSON.stringify(data),
-                dataType: 'json',
+                type: 'get',
                 cache: false,
-                processData: false,
                 contentType: 'application/json'
             }).done( res => {
                 if(!res.status){
+                    recognizeBtn('on');
                     alert(res.message);
                 }
             }).fail( res => {
@@ -522,10 +532,7 @@
                         return;
                     }
 
-                    // start recognize
-                    $('.recognize').attr('data-original-title', 'stop recognizing');
-                    $('.recognize-btn').attr('isopen','true').animate({left:'33px'});
-                    $('.recognize-btn').parent().css('background-color','#4fafe2');
+                    recognizeBtn('on');
 
                     let interval = $("#interval").val();
                     
@@ -543,9 +550,8 @@
                         processData: false,
                         contentType: 'application/json'
                     }).done( res => {
-                        if(res.status){
-                            tids = res.data;
-                        }else{
+                        if(!res.status){
+                            recognizeBtn('off');
                             alert(res.message);
                         }
                     }).fail( res => {
@@ -553,12 +559,8 @@
                     })
 
                 } else {
-                    // stop recognize
-                    $('.recognize').attr('data-original-title', 'start recognizing');
-                    $('.recognize-btn').attr('isopen','false').animate({left:'3px'});
-                    $('.recognize-btn').parent().css('background-color','#838383');
-
-                    stopRecognize(tids);
+                    recognizeBtn('off');
+                    stopRecognize();
 
                 }
             });
