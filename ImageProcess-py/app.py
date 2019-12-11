@@ -2,7 +2,7 @@ from flask import Flask, make_response, request, jsonify
 import uuid
 from db import Blacklist, Record, database
 from imgUtil import upload_blacklist_image, remove_image
-from videoThread import VideoThread, stop_thread
+from videoThread import VideoThread
 from playhouse.shortcuts import model_to_dict
 
 app = Flask(__name__, static_url_path='/api/v1.0')
